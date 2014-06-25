@@ -9,15 +9,11 @@ namespace MefAddIns
 	using ADD_Facts;
 	using Layout;
 	/*Design
-	 * Creates a note type that is based on a table.
-	 * The table populates the Checked List
-	 * The table is in turn populated by a reference to a Note. Each "line" is a row in the table. Each row then becomes a check list item.
-	 * "Linking" is determined by the wording of the text (that's the 'guid').
-	 * 
-	 * Reason for adding: Wanted a way to maintain a checklist of "how to write a novel" and add new things to it that could be fed into previously 
-	 * created layouts that had links to the note.
-	 * 
-	 * So basically the text-note itself is linked to in each of these derived layouts and then a checklist is added, feeding from the linked note.
+	 *
+	 *
+	 *THIS CLASS Is Incomplete as of 14/06/2014
+	 * -- The idea was that it would "parse" the Text [defined as what?] and looked for the [[token]] matches and create
+	 *    hyperlinks to those matches.
 	 */
 	[Export(typeof(mef_IBase))]
 	public class Addin_Facts:PlugInBase, mef_IBase
@@ -33,9 +29,30 @@ namespace MefAddIns
 		{
 			get { return @"Brent Knowles"; }
 		}
+
+		/// <summary>
+		/// Gets the dependencyguid.
+		/// 16/06/2014 -- added this dependency because we will reuse the lookup form.
+		/// </summary>
+		/// <value>
+		/// The dependencyguid.
+		/// </value>
+		public override string dependencyguid {
+			get {
+				return "lookupword";
+			}
+		}
+	
+		public override string dependencymainapplicationversion {
+			get {
+				return "1.5.1.0";
+			}
+		}
+		/* 1.1.0.0 - adding the "brainstormer"
+		*/
 		public string Version
 		{
-			get { return @"1.0.0.0"; }
+			get { return @"1.1.0.1"; }
 		}
 		public string Description
 		{
@@ -58,6 +75,7 @@ namespace MefAddIns
 		{
 			//NewMessage.Show ("Registering Picture");
 			Layout.LayoutDetails.Instance.AddToList(typeof(NoteDataXML_Facts), Loc.Instance.GetString ("Fact"),Loc.Instance.GetString ("Organization"));
+			Layout.LayoutDetails.Instance.AddToList(typeof(NoteDataXML_Advisor), Loc.Instance.GetString ("Advisor"),Loc.Instance.GetString ("Organization"));
 		}
 
 		

@@ -35,11 +35,16 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Design" />
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="mef_Addin_Fact.cs" />
     <Compile Include="NoteDataXLM_Facts.cs" />
+    <Compile Include="NoteDataXML_Advisor.cs" />
+    <Compile Include="advisorQueryMakerBase.cs" />
+    <Compile Include="advisorQueryJustFilter.cs" />
+    <Compile Include="advisorKeywords.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -58,6 +63,14 @@
     <ProjectReference Include="..\..\yom2013B\MEF_Interfaces\MEF_Interfaces.csproj">
       <Project>{2E366A51-224A-4C3B-90D6-FE8C81C9EB78}</Project>
       <Name>MEF_Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\yom2013B\LayoutPanels\LayoutPanels.csproj">
+      <Project>{77AADEE3-CCBF-4802-9703-30EA7A4424AC}</Project>
+      <Name>LayoutPanels</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Addin_Lookup_Word\Addin_Lookup_Word.csproj">
+      <Project>{878F603F-60EC-4D2D-9FA0-07126F3B5D16}</Project>
+      <Name>Addin_Lookup_Word</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>
