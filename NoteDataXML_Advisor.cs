@@ -205,6 +205,7 @@ notecardtype=characteradvice
 				//NewMessage.Show ("Is playing = " + IsPlaying);
 				if (IsPlaying == false)
 				{
+					ParentNotePanel.Cursor = Cursors.WaitCursor;
 					playButton.Text = "||";
 					IsPlaying = true;
 					if (bw == null) ResetBackgroundWorker();
@@ -314,7 +315,8 @@ notecardtype=characteradvice
 			
 			// this allows our worker to report progress during work
 			bw.WorkerReportsProgress = true;
-			
+
+
 			// what to do in the background thread
 			bw.DoWork += new DoWorkEventHandler(
 				delegate(object o, DoWorkEventArgs args)
@@ -361,6 +363,8 @@ notecardtype=characteradvice
 			bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
 				delegate(object o, RunWorkerCompletedEventArgs args)
 				{
+				// set wait cursor back to normal
+				ParentNotePanel.Cursor = Cursors.Default;
 			//	label1.Text = "";
 			});
 

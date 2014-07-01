@@ -72,5 +72,9 @@
       <Project>{878F603F-60EC-4D2D-9FA0-07126F3B5D16}</Project>
       <Name>Addin_Lookup_Word</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Addin_YourothermindMarkup\Addin_YourothermindMarkup.csproj">
+      <Project>{A04A0908-E383-4ED9-9DBA-FB1B63041CB4}</Project>
+      <Name>Addin_YourothermindMarkup</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
