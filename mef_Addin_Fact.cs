@@ -49,12 +49,13 @@ namespace MefAddIns
 			}
 		}
 		/*
+		 * 1.2.1.1  - Streamlining function definition -- removing unnecesssary parameter
 		 * 1.2.0.1 - setting up Fact note to actually parse for facts
 		 * 1.1.0.0 - adding the "brainstormer"
 		*/
 		public string Version
 		{
-			get { return @"1.2.0.1"; }
+			get { return @"1.2.1.1"; }
 		}
 		public string Description
 		{

@@ -92,15 +92,15 @@ namespace ADD_Facts
 		/// We return an error code for displaying errors.
 		/// 
 		/// </summary>
-		protected int StartFactGathering (ref List<string> results, string _FactParseNote, string textFromNote)
+		public int StartFactGathering (ref List<string> results,/* string _FactParseNote, */string textFromNote)
 		{
 			try {
 
 
 
-				if (Constants.BLANK == _FactParseNote ) {
+				/*if (Constants.BLANK == _FactParseNote ) {
 					return 1;
-				} else {
+				} else*/ 
 					// Step 1 - Link to a note on this page with the name(s) of another note : Loop
 				
 					if (textFromNote == Constants.BLANK) {
@@ -147,6 +147,13 @@ namespace ADD_Facts
 
 										LayoutPanel temporaryLayoutPanel = new LayoutPanel ("", false);
 										temporaryLayoutPanel.LoadLayout (LayoutGUID, false, null, true);
+										if (temporaryLayoutPanel == null)
+										{
+											return 100;
+										}
+
+									//NewMessage.Show (temporaryLayoutPanel.Count ().ToString());
+
 										string[] code = new string[3];
 										// we fake a string array to meet the Fact-Parse system's expectations of Storyboard/GrouporNoGroup/Details
 										// even though we do not need the first two lines
@@ -154,16 +161,33 @@ namespace ADD_Facts
 										code [1] = "[[bygroup]]";
 
 										code [2] = Code;
+									//NewMessage.Show (Code);
 										Hashtable hResults = Addin_YourothermindMarkup.GetFactsOnRemoteNote (temporaryLayoutPanel, code);
+
 										if (hResults != null) {
 											foreach (DictionaryEntry gg in hResults) {
-
-												// only add if they matc h the search criteria
-												if (gg.Key.ToString () == token)
+										//	NewMessage.Show ("Matching " + gg.Key.ToString() + " with " + token);
+											if (gg.Key.ToString () == token)
+											{
+												string[] factsforentry = gg.Value.ToString().Split(new string[1]{FactListMaker.SEP_PHRASES}, StringSplitOptions.RemoveEmptyEntries);
+												if (factsforentry != null)
 												{
-													string sresult = gg.Value + FactListMaker.SEP_INSIDEPHRASE + gg.Key + FactListMaker.SEP_INSIDEPHRASE + LayoutGUID;
-													results.Add (sresult);
+													
+													foreach (string s in factsforentry)
+													{
+														string sresult = /*gg.Value*/s + FactListMaker.SEP_INSIDEPHRASE + token + FactListMaker.SEP_INSIDEPHRASE + LayoutGUID;
+														results.Add (sresult);
+													}
 												}
+											}
+
+
+//												// only add if they matc h the search criteria
+//												if (gg.Key.ToString () == token)
+//												{
+//													string sresult = gg.Value + FactListMaker.SEP_INSIDEPHRASE + gg.Key + FactListMaker.SEP_INSIDEPHRASE + LayoutGUID;
+//													results.Add (sresult);
+//												}
 										
 											}
 										}
@@ -199,7 +223,7 @@ namespace ADD_Facts
 						}
 					}
 
-				}
+
 			} catch (Exception ex) {
 				lg.Instance.Line ("StartFactGathering", ProblemType.EXCEPTION, ex.ToString ());
 
@@ -411,7 +435,20 @@ namespace ADD_Facts
 
 
 		BackgroundWorker bw = null;
-		
+
+		/// <summary>
+		/// Sets the tag. 
+		/// 
+		/// So far only being used in unit tests
+		/// </summary>
+		/// <param name='newTag'>
+		/// New tag.
+		/// </param>
+		public void SetTag(string newTag)
+		{
+			this.token = newTag;
+		}
+
 		protected void ResetBackgroundWorker()
 		{
 			bw = new BackgroundWorker();
@@ -445,7 +482,7 @@ namespace ADD_Facts
 						{
 							// suspending title also prevents an unsafe thread call
 							LayoutDetails.Instance.SuspendTitleUpdate(true);
-							error = StartFactGathering (ref results, FactParseNote, textFromNote);
+							error = StartFactGathering (ref results, /*FactParseNote,*/ textFromNote);
 							LayoutDetails.Instance.SuspendTitleUpdate(false);
 						}
 						catch (Exception ex)
