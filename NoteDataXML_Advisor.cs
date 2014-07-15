@@ -39,6 +39,17 @@ namespace ADD_Facts
 	public class NoteDataXML_Advisor:  NoteDataXML
 	{
 	
+		private int currentIndexForTypeofAdvisor = 0;
+
+		public int CurrentIndexForTypeofAdvisor {
+			get {
+				return currentIndexForTypeofAdvisor;
+			}
+			set {
+				currentIndexForTypeofAdvisor = value;
+			}
+		}
+
 		// this is the INDEX (name column) into the system table that contains the queries
 		// it will then lookup the appropriate query as required
 		private string currentFilterName = Constants.BLANK;
@@ -64,6 +75,12 @@ namespace ADD_Facts
 			CommonConstructorBehavior ();
 			
 		}
+	
+	public NoteDataXML_Advisor(NoteDataInterface Note) : base(Note)
+	{
+		//this.Notelink = ((NoteDataXML_Checklist)Note).Notelink;
+	}
+
 		protected override void CommonConstructorBehavior ()
 		{
 			base.CommonConstructorBehavior ();
@@ -82,6 +99,15 @@ namespace ADD_Facts
 		{
 			return Loc.Instance.GetString("Advisor");
 		}
+
+		public override void CopyNote (NoteDataInterface Note)
+		{
+			base.CopyNote (Note);
+			this.CurrentFilterName = ((NoteDataXML_Advisor)Note).CurrentFilterName;
+			this.CurrentIndexForTypeofAdvisor = ((NoteDataXML_Advisor)Note).CurrentIndexForTypeofAdvisor;
+
+		}
+
 		private lookupControl lookup;
 		private void Pause ()
 		{
@@ -173,7 +199,8 @@ notecardtype=characteradvice
 			CurrentModeDropDown.Items.Add (Loc.Instance.GetString("By Filter")); // 2
 			CurrentModeDropDown.Items.Add (Loc.Instance.GetString("By Any Keyword")); // 3
 			CurrentModeDropDown.Items.Add (Loc.Instance.GetString("By All Keywords")); // 4
-			CurrentModeDropDown.SelectedIndex = 0;
+			CurrentModeDropDown.Items.Add (Loc.Instance.GetString("Just Word Lookup")); // 5
+			CurrentModeDropDown.SelectedIndex = CurrentIndexForTypeofAdvisor;
 
 			CurrentModeDropDown.SelectedIndexChanged+= (object sender, EventArgs e) => {
 				GenerateAppropriateList();
@@ -185,6 +212,8 @@ notecardtype=characteradvice
 				{
 					CurrentFilterDropDown.Enabled = false;
 				}
+				CurrentIndexForTypeofAdvisor = CurrentModeDropDown.SelectedIndex;
+				SetSaveRequired(true);
 			};
 
 
@@ -508,13 +537,17 @@ notecardtype=characteradvice
 				}
 				QueryMaker = new advisorKeywords(details, true);
 				break;
+			case 5: QueryMaker = null;
+				lastFoundItems = null;
+				// this option is for when we neeed the lookup panel to function BUT don't care about brainstormings
+				break;
 			}
 			
 			
 			
 
-			
-			GenerateNewList(QueryMaker);
+			if (QueryMaker != null)
+				GenerateNewList(QueryMaker);
 			SkipABeat = 0;
 		}
 
@@ -528,11 +561,11 @@ notecardtype=characteradvice
 		private void GenerateNewList (advisorQueryMakerBase QueryMaker)
 		{
 
-			lastFoundItems = QueryMaker.BuildQuery();
-
-			// we shuffle now so that the list can still be navigated later (i.e., tehre's still a concept for previous and next)
-			lastFoundItems.Shuffle();
-
+			lastFoundItems = QueryMaker.BuildQuery ();
+			if (lastFoundItems != null) {
+				// we shuffle now so that the list can still be navigated later (i.e., tehre's still a concept for previous and next)
+				lastFoundItems.Shuffle ();
+			}
 //			string notelist = "";
 //			if (lastFoundItems != null) {
 //				foreach (MasterOfLayouts.NameAndGuid name in lastFoundItems)

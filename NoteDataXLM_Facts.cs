@@ -178,6 +178,7 @@ namespace ADD_Facts
 														string sresult = /*gg.Value*/s + FactListMaker.SEP_INSIDEPHRASE + token + FactListMaker.SEP_INSIDEPHRASE + LayoutGUID;
 														results.Add (sresult);
 													}
+
 												}
 											}
 
@@ -200,8 +201,10 @@ namespace ADD_Facts
 										// Step 4 - Return the list of facts/positions in a usable manner to here.
 
 
-										// Step 5 - TODO. In case I forget all this has to happen on a BackgroundThread. Do that last, though.
-									
+										
+									// dispose memory 09/07/2014
+									hResults = null;
+									temporaryLayoutPanel.Dispose();
 									} else {
 										return 3;
 									}
@@ -209,6 +212,7 @@ namespace ADD_Facts
 									return 4;
 
 								}
+
 							} // foreach line
 
 
@@ -216,7 +220,7 @@ namespace ADD_Facts
 							// Step 6 - Now we parse the results and add them to the form.
 							//  -- nope we have this called in the Progress thing
 
-
+						 
 						}//lines
 					else {
 							return 5;
@@ -253,7 +257,14 @@ namespace ADD_Facts
 			}
 			return null;
 		}
+		public override void CopyNote (NoteDataInterface Note)
+		{
+			base.CopyNote (Note);
+			this.Token = ((NoteDataXML_Facts)Note).Token;
+			this.FactParseNote = ((NoteDataXML_Facts)Note).FactParseNote;
 
+
+		}
 		ToolTip tip = null;
 		/// <summary>
 		/// Updates the view.
@@ -300,6 +311,9 @@ namespace ADD_Facts
 							box.Text = MasterOfLayouts.GetNameFromGuid(factRecord.layoutguid);
 							box.Name= factRecord.layoutguid;
 							box.AutoSize = true;
+							box.MinimumSize = new Size(200,75);
+							box.AutoSizeMode = AutoSizeMode.GrowOnly;
+							tip.SetToolTip(box, box.Text);
 						}
 
 						LinkLabel newLabel = new LinkLabel();
@@ -345,7 +359,10 @@ namespace ADD_Facts
 			try {
 				 BottomInfo = new Panel();
 				BottomInfo.Dock = DockStyle.Bottom;
-				BottomInfo.Height = 50;
+				BottomInfo.Height = 75;
+
+
+				BottomInfo.AutoScroll = true;
 
 				 refreshButton = new Button();
 				refreshButton.Dock = DockStyle.Left;
@@ -353,8 +370,9 @@ namespace ADD_Facts
 				refreshButton.Text = Loc.Instance.GetString("O");
 				refreshButton.Click += (object sender, EventArgs e) => {
 					refreshButton.Cursor = Cursors.WaitCursor;
-					ResetBackgroundWorker();
 					refreshButton.Enabled = false;
+					ResetBackgroundWorker();
+
 				};
 
 				BottomInfo.Controls.Add (refreshButton);
@@ -448,103 +466,120 @@ namespace ADD_Facts
 		{
 			this.token = newTag;
 		}
-
-		protected void ResetBackgroundWorker()
+		/// <summary>
+		/// Resets the background worker.
+		/// </summary>
+		protected void ResetBackgroundWorker ()
 		{
-			bw = new BackgroundWorker();
-			
-			// this allows our worker to report progress during work
-			bw.WorkerReportsProgress = true;
-			NoteDataXML_RichText note = (NoteDataXML_RichText)this.Layout.FindNoteByName (FactParseNote);
-			string textFromNote = note.GetAsText ();
-			// what to do in the background thread
-			bw.DoWork += new DoWorkEventHandler(
-				delegate(object o, DoWorkEventArgs args)
-				{
-				if (o == null) {
-					lg.Instance.Line ("XML_FACTs.ResetBackgroundWorker", ProblemType.ERROR, "object was null");
-					return;}
 
-
-
-				BackgroundWorker b = o as BackgroundWorker;
-				int error = 0;
-				List<string> results = new List<string>();
-
-				// do some simple processing for 10 seconds
-				for (int i = 1; i <= 2; i++)
-				{
-					//Console.Beep();
-					if (1 == i)
-					{
-						//Do the work
-						try
-						{
-							// suspending title also prevents an unsafe thread call
-							LayoutDetails.Instance.SuspendTitleUpdate(true);
-							error = StartFactGathering (ref results, /*FactParseNote,*/ textFromNote);
-							LayoutDetails.Instance.SuspendTitleUpdate(false);
-						}
-						catch (Exception ex)
-						{
-							lg.Instance.Line ("NoteDataXML_Facts:ResetBackgroundWorker", ProblemType.EXCEPTION, ex.ToString ());
-						}
-					}
-					if (2 == i)
-					{
-
-						// report the progress in percent
-						b.ReportProgress(error, results );
-					}
-					Thread.Sleep(1000);
-				}
+			if (FactParseNote != Constants.BLANK) {
 				
-			});
-			
-			// what to do when progress changed (update the progress bar for example)
-			bw.ProgressChanged += new ProgressChangedEventHandler(
-				delegate(object o, ProgressChangedEventArgs args)
+				NoteDataXML_RichText note = (NoteDataXML_RichText)this.Layout.FindNoteByName (FactParseNote);
+				if (note != null)
 				{
+				bw = new BackgroundWorker ();
+			
+				// this allows our worker to report progress during work
+				bw.WorkerReportsProgress = true;
 
-				//NewMessage.Show ("Here with " + args.UserState.GetType().ToString ());
-				results_to_store = (List<string>)args.UserState;
 
-				if (o == null) return ;
-				int error = args.ProgressPercentage;
-				switch (error) {
-				case 1:
-					NewMessage.Show (Loc.Instance.GetString ("Provide the name of a note on this layout with fact gathering instructions."));
-					break;
-				case 2:
-					NewMessage.Show (Loc.Instance.GetStringFmt ("The note [{0}] does not exist on this layout.", FactParseNote));
-					break;
-				case 3:
-					NewMessage.Show (Loc.Instance.GetStringFmt ("The layout [{0}] does not have a valid GUID", "--"));
-					break;
-				case 4:
-					NewMessage.Show (Loc.Instance.GetStringFmt ("Each line must be formated like: LayoutName;[[Group,Storyboard,Chapters*,*]]. The length was [{0}] and the source text was [{1}]. The code must be on the Source Note, not the Fact card!", /*RawView.Length*/0, /*textFromNote*/"--"));
-					break;
-				case 5: NewMessage.Show (Loc.Instance.GetStringFmt("The source note [{0}] does not have any text on it", FactParseNote));break;
+				string textFromNote = note.GetAsText ();
+				// what to do in the background thread
+				bw.DoWork += new DoWorkEventHandler (
+				delegate(object o, DoWorkEventArgs args) {
+					if (o == null) {
+						lg.Instance.Line ("XML_FACTs.ResetBackgroundWorker", ProblemType.ERROR, "object was null");
+						return;
+					}
+
+
+
+					BackgroundWorker b = o as BackgroundWorker;
+					int error = 0;
+					List<string> results = new List<string> ();
+
+					// do some simple processing for 10 seconds
+					for (int i = 1; i <= 2; i++) {
+						//Console.Beep();
+						if (1 == i) {
+							//Do the work
+							try {
+								// suspending title also prevents an unsafe thread call
+								LayoutDetails.Instance.SuspendTitleUpdate (true);
+								error = StartFactGathering (ref results, /*FactParseNote,*/textFromNote);
+								LayoutDetails.Instance.SuspendTitleUpdate (false);
+							} catch (Exception ex) {
+								lg.Instance.Line ("NoteDataXML_Facts:ResetBackgroundWorker", ProblemType.EXCEPTION, ex.ToString ());
+							}
+						}
+						if (2 == i) {
+
+							// report the progress in percent
+							b.ReportProgress (error, results);
+						}
+						Thread.Sleep (1000);
+					}
+				
+				});
+			
+				// what to do when progress changed (update the progress bar for example)
+				bw.ProgressChanged += new ProgressChangedEventHandler (
+				delegate(object o, ProgressChangedEventArgs args) {
+
+					//NewMessage.Show ("Here with " + args.UserState.GetType().ToString ());
+					results_to_store = (List<string>)args.UserState;
+
+					if (o == null)
+						return;
+					int error = args.ProgressPercentage;
+					switch (error) {
+					case 1:
+						NewMessage.Show (Loc.Instance.GetString ("Provide the name of a note on this layout with fact gathering instructions."));
+						break;
+					case 2:
+						NewMessage.Show (Loc.Instance.GetStringFmt ("The note [{0}] does not exist on this layout.", FactParseNote));
+						break;
+					case 3:
+						NewMessage.Show (Loc.Instance.GetStringFmt ("The layout [{0}] does not have a valid GUID", "--"));
+						break;
+					case 4:
+						NewMessage.Show (Loc.Instance.GetStringFmt ("Each line must be formated like: LayoutName;[[Group,Storyboard,Chapters*,*]]. The length was [{0}] and the source text was [{1}]. The code must be on the Source Note, not the Fact card!", /*RawView.Length*/0, /*textFromNote*/"--"));
+						break;
+					case 5:
+						NewMessage.Show (Loc.Instance.GetStringFmt ("The source note [{0}] does not have any text on it", FactParseNote));
+						break;
+					}
+
+					SetSaveRequired (true);
+					UpdateView ();
+				});
+			
+				// what to do when worker completes its task (notify the user)
+				bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler (
+				delegate(object o, RunWorkerCompletedEventArgs args) {
+
+			
+
+					//label1.Text = "Finished!";
+					refreshButton.Enabled = true;
+					refreshButton.Cursor = Cursors.Default;
+				});
+			
+				//
+				bw.RunWorkerAsync ();
 				}
-
-				SetSaveRequired(true);
-				UpdateView();
-			});
-			
-			// what to do when worker completes its task (notify the user)
-			bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
-				delegate(object o, RunWorkerCompletedEventArgs args)
+				else
 				{
+					NewMessage.Show (Loc.Instance.GetStringFmt("The note {0} does not exist on this layout.", FactParseNote));
+					refreshButton.Enabled = true;
 
-			
-
-				//label1.Text = "Finished!";
+					refreshButton.Cursor = Cursors.Default;
+				}
+			} else {
+				NewMessage.Show (Loc.Instance.GetString ("You must supply a note name in properties menu from which the fact knows where to look for its fact references."));
 				refreshButton.Enabled = true;
 				refreshButton.Cursor = Cursors.Default;
-			});
-			
-			//
-			bw.RunWorkerAsync();
+			}
 		}
 		
 	}
